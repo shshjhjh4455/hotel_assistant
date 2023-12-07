@@ -4,13 +4,17 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 import time
-import pymysql
+import pyodbc
+
 
 # Chrome 옵션 설정
 options = Options()
 
+# 시크릿 모드로 실행
+options.add_argument("--incognito")
+
 # 예시 옵션: 헤드리스 모드로 실행 (브라우저 UI 없이 실행)
-# options.add_argument("--headless")
+options.add_argument("--headless")
 
 # WebDriver 서비스
 service = Service(ChromeDriverManager().install())
@@ -53,3 +57,49 @@ hotel_infomation = driver.find_element(
     "#BOTTOM_SHEET > div.css-gqqlqe > div.css-1ulzvpi > div",
 ).text
 
+
+# 데이터베이스 연결 설정
+server = "localhost"
+username = "sa"
+password = "Hotelchat44"
+database = "master"
+timeout = 30
+
+cnxn = pyodbc.connect(
+    "DRIVER={ODBC Driver 17 for SQL Server};SERVER="
+    + server
+    # + ";DATABASE="
+    # + database
+    + ";UID="
+    + username
+    + ";PWD="
+    + password
+    + ";TIMEOUT="
+    + str(timeout)
+)
+
+cursor = cnxn.cursor()
+
+# SQL 쿼리 작성
+sql = """
+INSERT INTO HOTEL (HOTEL_ID, NAME, LOCATION, RATING, MAINREVIEW, INFORMATION)
+VALUES (?, ?, ?, ?, ?, ?)
+"""
+
+# SQL 쿼리 실행
+cursor.execute(
+    sql,
+    hotel_id,
+    hotel_name,
+    hotel_location,
+    hotel_rating,
+    hotel_mainreview,
+    hotel_infomation,
+)
+
+# 변경사항 저장
+cnxn.commit()
+
+# 데이터베이스 연결 종료
+cursor.close()
+cnxn.close()
