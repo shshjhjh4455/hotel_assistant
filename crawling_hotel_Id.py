@@ -19,13 +19,11 @@ while True:
 
 # 호텔 링크 추출
 hotel_ids = []
-selectors = [
-    "#__next > div.StyleComponent_container__1jS9A.list_listContainer__2kL99.list_bottomPadding__xvWzu > section.PlaceListBody_placeListBodyContainer__1u70R > div > div > a",
-    "#__next > div.StyleComponent_container__1jS9A.list_listContainer__2kL99.list_bottomPadding__xvWzu > section.PlaceListBody_placeListBodyContainer__1u70R > div > section > div > div > a",
-]
-
-for selector in selectors:
-    hotel_links = driver.find_elements(By.CSS_SELECTOR, selector)
+for i in range(1, 8):  # 7개 파트 반복
+    section_selector = f"#__next > div.StyleComponent_container__1jS9A.list_listContainer__2kL99.list_bottomPadding__xvWzu > section.PlaceListBody_placeListBodyContainer__1u70R > div:nth-child({i})"
+    hotel_links = driver.find_elements(
+        By.CSS_SELECTOR, f"{section_selector} > div > div > a"
+    )
     for link in hotel_links:
         href = link.get_attribute("href")
         if href:  # href 속성이 None이 아닌 경우에만 처리
