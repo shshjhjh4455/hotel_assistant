@@ -48,6 +48,8 @@ driver.find_element(
     By.CSS_SELECTOR,
     "#__next > div > div > main > article > div.css-c45a2y > div > section > div:nth-child(5) > div > div > div.css-14fkj0f > div > button",
 ).click()
+# 페이지 로드 대기
+time.sleep(5)  # 웹페이지가 완전히 로드될 때까지 기다리는 시간 (조정 필요)
 hotel_infomation = driver.find_element(
     By.CSS_SELECTOR,
     "#BOTTOM_SHEET > div.css-gqqlqe > div.css-1ulzvpi > div",
