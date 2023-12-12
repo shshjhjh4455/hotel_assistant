@@ -5,13 +5,9 @@ from selenium.webdriver.chrome.options import Options
 import time
 import re
 import pyodbc
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
 
 
-def process_hotel_page(hotel_id, server, username, password):
-    print(f"Processing hotel ID: {hotel_id}")
+def process_review_page(hotel_id, server, username, password):
     options = Options()
     options.add_argument("--incognito")
     driver = webdriver.Chrome(options=options)
@@ -19,66 +15,92 @@ def process_hotel_page(hotel_id, server, username, password):
     try:
         url = f"https://place-site.yanolja.com/places/{hotel_id}/review"
         driver.get(url)
-        time.sleep(10)  # 페이지 로딩 대기
 
-        review_info = []
-        max_reviews = 500
-        collected_reviews = 0
-
-        while collected_reviews < max_reviews:
-            new_reviews = extract_review_info(
-                driver, hotel_id, collected_reviews, max_reviews
-            )
-            if not new_reviews:
-                break  # 추가 리뷰가 없으면 종료
-
-            review_info.extend(new_reviews)
-            collected_reviews += len(new_reviews)
-
-            # 스크롤 다운
+        # 페이지를 계속 아래로 스크롤하여 리뷰 로드
+        last_height = driver.execute_script("return document.body.scrollHeight")
+        review_count = 0
+        while review_count < 500:
             driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            time.sleep(5)  # 새로운 콘텐츠 로드 대기
+            time.sleep(1)  # 페이지 로드 대기
+            new_height = driver.execute_script("return document.body.scrollHeight")
+            if new_height == last_height:
+                break
+            last_height = new_height
 
-        # 데이터베이스에 저장
-        save_review_data(review_info, server, username, password)
-        print(f"Data saved for hotel ID: {hotel_id}")
+            review_elements = driver.find_elements(
+                By.CSS_SELECTOR, "div.css-1v46kci > div > div"
+            )
+            review_count = len(review_elements)
+
+        # 리뷰 정보 추출 및 저장
+        save_review_data(driver, hotel_id, server, username, password)
 
     except Exception as e:
-        print(f"Error processing hotel ID {hotel_id}: {e}")
+        print(f"Error processing review page for hotel ID {hotel_id}: {e}")
     finally:
         driver.quit()
 
 
-def extract_review_info(driver, hotel_id, start_index, max_reviews):
-    review_containers = driver.find_elements(
-        By.CSS_SELECTOR, "#__next > div > div > main > div > div:nth-child(4) > div"
+def calculate_rating(rating_element):
+    # 모든 별(SVG) 요소를 찾음
+    stars = rating_element.find_elements(By.CSS_SELECTOR, "svg.css-189aa3t")
+    filled_stars_count = 0
+
+    # 색이 채워진 별의 개수를 세어 평점 계산
+    for star in stars:
+        if 'fill="#fdbd00"' in star.get_attribute("outerHTML"):
+            filled_stars_count += 1
+
+    return filled_stars_count
+
+
+def save_review_data(driver, hotel_id, server, username, password):
+    cnxn = pyodbc.connect(
+        "DRIVER={ODBC Driver 17 for SQL Server};SERVER="
+        + server
+        + ";UID="
+        + username
+        + ";PWD="
+        + password
     )
+    cursor = cnxn.cursor()
 
-    review_info = []
-    for index, review in enumerate(
-        review_containers[start_index:], start=start_index + 1
-    ):
-        if index > max_reviews:
-            break  # 최대 리뷰 개수에 도달하면 중단
+    # 모든 리뷰 요소를 찾음
+    review_blocks = driver.find_elements(
+        By.CSS_SELECTOR,
+        "#__next > div > div > main > div > div:nth-child(4) > div:nth-child(1) > div",
+    )
+    review_count = 0
 
-        try:
-            rating_selector = f"#__next > div > div > main > div > div:nth-child(4) > div:nth-child({index}) > div > div > div.css-176xgwq > div:nth-child(1) > div > div.css-ledymh > div"
-            comment_selector = f"#__next > div > div > main > div > div:nth-child(4) > div:nth-child({index}) > div > div > div.css-1v46kci > div > div"
+    for review_block in review_blocks:
+        if review_count >= 500:  # 최대 500개의 리뷰 처리
+            break
 
-            rating_element = driver.find_element(By.CSS_SELECTOR, rating_selector)
-            comment_element = driver.find_element(By.CSS_SELECTOR, comment_selector)
+        # 별점 추출
+        rating_element = review_block.find_element(
+            By.CSS_SELECTOR,
+            f"__next > div > div > main > div > div:nth-child(4) > div:nth-child(1) > div:nth-child(1~여러개) > div > div > div.css-176xgwq > div:nth-child(1) > div > div.css-ledymh > div" ,
+        )
+        rating = calculate_rating(rating_element)
 
-            rating = calculate_rating(rating_element)
-            comment = comment_element.text
+        # 코멘트 추출
+        comment_element = review_block.find_element(
+            By.CSS_SELECTOR, "div > div > div.css-1v46kci > div > div"
+        )
+        comment = comment_element.text
 
-            review_info.append((hotel_id, rating, comment))
+        # 데이터베이스에 저장
+        cursor.execute(
+            "INSERT INTO REVIEW (HOTEL_ID, RATING, COMMENT) VALUES (?, ?, ?)",
+            hotel_id,
+            rating,
+            comment,
+        )
+        review_count += 1
 
-        except Exception as e:
-            print(
-                f"Skipping review at index {index} for hotel ID {hotel_id} due to error: {e}"
-            )
-
-    return review_info
+    cnxn.commit()
+    cursor.close()
+    cnxn.close()
 
 
 def calculate_rating(rating_element):
@@ -92,33 +114,11 @@ def calculate_rating(rating_element):
     return filled_stars_count
 
 
-def save_review_data(review_info, server, username, password):
-    cnxn = pyodbc.connect(
-        "DRIVER={ODBC Driver 17 for SQL Server};SERVER="
-        + server
-        + ";UID="
-        + username
-        + ";PWD="
-        + password
-    )
-    cursor = cnxn.cursor()
-
-    sql_review = """
-    INSERT INTO REVIEW (HOTEL_ID, RATING, COMMENT)
-    VALUES (?, ?, ?);
-    """
-    for review in review_info:
-        cursor.execute(sql_review, review)
-    cnxn.commit()
-
-    cursor.close()
-    cnxn.close()
-
-
 def main():
     server = "127.0.0.1"
     username = "sa"
     password = "Hotelchat44"
+
     cnxn = pyodbc.connect(
         "DRIVER={ODBC Driver 17 for SQL Server};SERVER="
         + server
@@ -134,9 +134,9 @@ def main():
     cursor.close()
     cnxn.close()
 
-    with concurrent.futures.ThreadPoolExecutor() as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
         futures = [
-            executor.submit(process_hotel_page, hotel_id, server, username, password)
+            executor.submit(process_review_page, hotel_id, server, username, password)
             for hotel_id in hotel_ids
         ]
         concurrent.futures.wait(futures)
