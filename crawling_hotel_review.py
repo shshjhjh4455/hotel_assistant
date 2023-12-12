@@ -9,6 +9,7 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+from concurrent.futures import ThreadPoolExecutor
 
 
 def process_review_page(driver, hotel_id):
@@ -125,11 +126,15 @@ def save_reviews_to_database(reviews, server, username, password):
     cnxn.close()
 
 
+from concurrent.futures import ThreadPoolExecutor
+
+
 def main():
     server = "127.0.0.1"
     username = "sa"
     password = "Hotelchat44"
 
+    # 데이터베이스에서 호텔 ID 목록을 가져옴
     cnxn = pyodbc.connect(
         "DRIVER={ODBC Driver 17 for SQL Server};SERVER="
         + server
@@ -141,22 +146,36 @@ def main():
     cursor = cnxn.cursor()
     cursor.execute("SELECT HOTEL_ID FROM HOTEL")
     hotel_ids = [row[0] for row in cursor.fetchall()]
-    # print(f"hotel_id list : {(hotel_ids)} ")
-
     cursor.close()
     cnxn.close()
 
+    # 병렬 처리를 위한 ThreadPoolExecutor 설정
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = []
+        for hotel_id in hotel_ids:
+            futures.append(
+                executor.submit(process_review, hotel_id, server, username, password)
+            )
+
+        # 모든 작업이 완료될 때까지 기다림
+        for future in concurrent.futures.as_completed(futures):
+            print(future.result())
+
+
+def process_review(hotel_id, server, username, password):
     options = Options()
     options.add_argument("--incognito")
+    driver = webdriver.Chrome(options=options)
 
-    # 각 호텔 ID에 대한 리뷰 처리를 순차적으로 실행
-    for hotel_id in hotel_ids:
-        driver = webdriver.Chrome(options=options)
+    try:
         reviews = process_review_page(driver, hotel_id)
         if reviews:
             save_reviews_to_database(reviews, server, username, password)
-
-    print("All review processing tasks completed.")
+        return f"Completed processing for hotel ID: {hotel_id}"
+    except Exception as e:
+        return f"Error processing hotel ID {hotel_id}: {e}"
+    finally:
+        driver.quit()
 
 
 if __name__ == "__main__":
