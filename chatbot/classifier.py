@@ -1,30 +1,34 @@
-def classify_question(question):
-    """
-    사용자의 질문을 분석하여 호텔 추천과 관련된 질문인지 판별합니다.
+# chatbot/classifier.py
 
-    Parameters:
-    question (str): 사용자의 질문
-
-    Returns:
-    bool: 질문이 호텔 추천과 관련되었는지 여부
-    """
-    # 호텔 추천과 관련된 키워드 목록
-    hotel_related_keywords = ["호텔", "숙박", "예약", "숙소", "투숙", "룸", "객실"]
-
-    # 질문 내에서 키워드가 있는지 확인
-    return any(keyword in question for keyword in hotel_related_keywords)
+from transformers import BertForSequenceClassification, BertConfig
+from tokenization_morp import BertTokenizerWithMorp
+import torch
 
 
+class HotelQuestionClassifier:
+    def __init__(self):
+        self.model_path = "data/"
+        self.tokenizer = BertTokenizerWithMorp(vocab_file="data/vocab.korean_morp.list")
+        self.config = BertConfig.from_json_file("data/bert_config.json")
+        self.model = BertForSequenceClassification(self.config)
+        self.model.load_state_dict(
+            torch.load("data/pytorch_model.bin", map_location="cpu")
+        )
+
+    def classify(self, question):
+        inputs = self.tokenizer.encode(
+            question, return_tensors="pt", max_length=512, truncation=True
+        )
+        with torch.no_grad():
+            outputs = self.model(inputs)
+        logits = outputs.logits
+        probabilities = torch.nn.functional.softmax(logits, dim=1)
+        return probabilities[0][1].item() > 0.5  # 임계값 설정
+
+
+# 사용 예시
 if __name__ == "__main__":
-    # 테스트 코드
-    test_questions = [
-        "서울에 좋은 호텔 추천해줄래?",
-        "내일 날씨 어때?",
-        "부산 근처에 가족과 함께 갈만한 숙소 있을까?",
-        "오늘 저녁 메뉴 추천해줘",
-    ]
-
-    for question in test_questions:
-        result = classify_question(question)
-        print(f"질문: {question}\n -> 호텔 추천 관련 질문: {result}\n")
-
+    classifier = HotelQuestionClassifier()
+    question = "서울에 좋은 호텔 추천해줄래?"
+    is_hotel_related = classifier.classify(question)
+    print(f"호텔 관련 질문: {is_hotel_related}")

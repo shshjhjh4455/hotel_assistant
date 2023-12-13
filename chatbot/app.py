@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify, render_template
 from classifier import classify_question
 from hotel_recommender import recommend_hotel
 from gpt_api import get_gpt_response
@@ -6,13 +6,20 @@ from gpt_api import get_gpt_response
 app = Flask(__name__)
 
 
-@app.route("/chatbot", methods=["POST"])
+@app.route("/")
+def home():
+    # 홈페이지를 렌더링하는 라우트
+    return render_template("index.html")
+
+
+@app.route("/chat", methods=["POST"])
 def chat():
     question = request.json.get("question")
     if classify_question(question):
-        return recommend_hotel(question)
+        answer = recommend_hotel(question)
     else:
-        return get_gpt_response(question)
+        answer = get_gpt_response(question)
+    return jsonify({"response": answer})
 
 
 if __name__ == "__main__":

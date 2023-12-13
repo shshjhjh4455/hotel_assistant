@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>호텔 추천 챗봇</title>
+    <style>
+      body {
+        font-family: "Arial", sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+      .chat-container {
+        width: 90%;
+        max-width: 600px;
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      .chat-header {
+        font-size: 24px;
+        color: #333;
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      .chat-box {
+        border: 1px solid #ddd;
+        padding: 10px;
+        height: 300px;
+        overflow-y: auto;
+        background-color: #fafafa;
+        margin-bottom: 20px;
+      }
+      .chat-input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;
+      }
+      .chat-button {
+        width: 100%;
+        padding: 10px;
+        border: none;
+        background-color: #007bff;
+        color: white;
+        border-radius: 4px;
+        margin-top: 10px;
+        cursor: pointer;
+      }
+      .chat-button:hover {
+        background-color: #0056b3;
+      }
+      .chat-message {
+        background-color: #e9ecef;
+        padding: 8px 10px;
+        margin: 5px 0;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="chat-container">
+      <div class="chat-header">호텔 추천 챗봇</div>
+      <div class="chat-box" id="chat-box"></div>
+      <input
+        type="text"
+        id="chat-input"
+        class="chat-input"
+        placeholder="질문을 입력하세요..."
+      />
+      <button id="chat-submit" class="chat-button">보내기</button>
+    </div>
+
+    <script>
+      document.getElementById("chat-submit").onclick = function () {
+        var input = document.getElementById("chat-input");
+        var message = input.value.trim();
+        if (message) {
+          var chatBox = document.getElementById("chat-box");
+          var userMessageDiv = document.createElement("div");
+          userMessageDiv.textContent = "나: " + message;
+          userMessageDiv.className = "chat-message";
+          chatBox.appendChild(userMessageDiv);
+
+          fetch("/chat", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ question: message }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              var botMessageDiv = document.createElement("div");
+              botMessageDiv.textContent = "챗봇: " + data.response;
+              botMessageDiv.className = "chat-message";
+              chatBox.appendChild(botMessageDiv);
+            });
+
+          input.value = "";
+          chatBox.scrollTop = chatBox.scrollHeight;
+        }
+      };
+    </script>
+  </body>
+</html>
