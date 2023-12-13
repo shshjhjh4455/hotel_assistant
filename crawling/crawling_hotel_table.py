@@ -8,6 +8,7 @@ import pyodbc
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 def process_hotel_page(hotel_id, server, username, password):
@@ -21,7 +22,7 @@ def process_hotel_page(hotel_id, server, username, password):
         driver.get(url)
         time.sleep(5)
         # 부라우저 맨 아래로 스크롤
-        # driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
         # 호텔 정보 추출
         hotel_name, hotel_location, hotel_rating = extract_hotel_info(driver)
@@ -76,9 +77,17 @@ def extract_room_info(driver, hotel_id):
     for index in range(1, len(room_containers) + 1):
         try:
             # 각 객실 컨테이너에 대한 CSS 선택자를 동적으로 생성
-            type_selector = f"#__next > div > div > main > article > div.css-c45a2y > div > section > div:nth-child(1) > div > div.css-1z06rwl > div:nth-child({index}) > div > section.css-1tykgzp > div.css-dhr6qk > div.css-deizzc > div.css-1rr4h0w"
-            price_selector = f"#__next > div > div > main > article > div.css-c45a2y > div > section > div:nth-child(1) > div > div.css-1z06rwl > div:nth-child({index}) > div > section.css-1qwzivr > div > a > div.css-g269i3 > div"
+            type_selector = f"#__next > div > div > main > article > div.css-c45a2y > div > section > div:nth-child(1) > div > div.css-1z06rwl > div:nth-child({index}) > div > section.css-1tykgzp > div.css-dhr6qk > div.css-deizzc"
+            price_selector = f"#__next > div > div > main > article > div.css-c45a2y > div > section > div:nth-child(1) > div > div.css-1z06rwl > div:nth-child(1) > div > section.css-1qwzivr > div"
             link_selector = f"#__next > div > div > main > article > div.css-c45a2y > div > section > div:nth-child(1) > div > div.css-1z06rwl > div:nth-child({index}) > div > section.css-1qwzivr > div > a"
+                            #__next > div > div > main > article > div.css-c45a2y > div > section > div:nth-child(1) > div > div.css-1z06rwl > div:nth-child(1) > div > section.css-1tykgzp > div.css-ryy6up > section > div:nth-child(1) > div > div > div > div > span > img
+                            #__next > div > div > main > article > div.css-c45a2y > div > section > div:nth-child(1) > div > div.css-1z06rwl > div:nth-child(1) > div > section.css-1tykgzp > div.css-ryy6up > section > div:nth-child(1) > div
+                            #__next > div > div > main > article > div.css-c45a2y > div > section > div:nth-child(1) > div > div.css-1z06rwl > div:nth-child(1) > div > section.css-1tykgzp > div.css-ryy6up
+                            #__next > div > div > main > article > div.css-c45a2y > div > section > div:nth-child(1) > div > div.css-1z06rwl > div:nth-child(1) > div > section.css-1tykgzp > div.css-ryy6up
+                            #__next > div > div > main > article > div.css-c45a2y > div > section > div:nth-child(1) > div > div.css-1z06rwl > div:nth-child(1) > div > section.css-1tykgzp > div.css-ryy6up > section > div:nth-child(1) > div > div > div > div > span > img
+                            #__next > div > div > main > article > div.css-c45a2y > div > section > div:nth-child(1) > div > div.css-1z06rwl > div:nth-child(2) > div > section.css-1tykgzp > div.css-ryy6up > section > div:nth-child(1) > div > div > div.swiper-slide.swiper-slide-visible > div > span > img
+                            #__next > div > div > main > article > div.css-c45a2y > div > section > div:nth-child(1) > div > div.css-1z06rwl > div:nth-child(3) > div > section.css-1tykgzp > div.css-ryy6up > section > div:nth-child(1) > div > div > div.swiper-slide.swiper-slide-visible.swiper-slide-active > div > span > img
+                            #__next > div > div > main > article > div.css-c45a2y > div > section > div:nth-child(1) > div > div.css-1z06rwl > div:nth-child(3) > div > section.css-1tykgzp > div.css-ryy6up > section > div:nth-child(1) > div > div > div.swiper-slide.swiper-slide-visible.swiper-slide-active > div > span > img
 
             # 명시적 대기를 사용하여 요소가 로드될 때까지 기다림
             WebDriverWait(driver, 20).until(
@@ -168,6 +177,7 @@ def main():
     server = "127.0.0.1"
     username = "sa"
     password = "Hotelchat44"
+
     cnxn = pyodbc.connect(
         "DRIVER={ODBC Driver 17 for SQL Server};SERVER="
         + server
@@ -177,18 +187,26 @@ def main():
         + password
     )
     cursor = cnxn.cursor()
-
     cursor.execute("SELECT HOTEL_ID FROM HOTEL")
     hotel_ids = [row[0] for row in cursor.fetchall()]
     cursor.close()
     cnxn.close()
 
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        futures = [
-            executor.submit(process_hotel_page, hotel_id, server, username, password)
+    # ThreadPoolExecutor를 사용하여 병렬 처리 구현
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        future_to_hotel = {
+            executor.submit(
+                process_hotel_page, hotel_id, server, username, password
+            ): hotel_id
             for hotel_id in hotel_ids
-        ]
-        concurrent.futures.wait(futures)
+        }
+
+        for future in as_completed(future_to_hotel):
+            hotel_id = future_to_hotel[future]
+            try:
+                future.result()
+            except Exception as exc:
+                print(f"{hotel_id} generated an exception: {exc}")
 
 
 if __name__ == "__main__":
