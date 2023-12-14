@@ -8,16 +8,19 @@ from tqdm import tqdm
 from kobert_tokenizer import KoBERTTokenizer
 
 # 감성 분석 모델 로드
-model_path = "chatbot/data/kobert_finetuned.bin"
+# model_path = "chatbot/data/kobert_finetuned.bin"
+model_path = "/content/drive/MyDrive/자연어처리/hotel_assistant/chatbot/data/kobert_finetuned.bin"
 sentiment_model = BertForSequenceClassification.from_pretrained(
     "skt/kobert-base-v1",
     num_labels=2,
-    state_dict=torch.load(model_path, map_location=torch.device("cpu")),
+    state_dict=torch.load(model_path, map_location=torch.device("cuda")),
 )
 
 
 # 호텔 리뷰 데이터 로드 및 처리 (CSV 파일 또는 데이터베이스에서 로드)
-reviews_df = pd.read_csv("crawling/data/reivew_table.csv")
+# reviews_df = pd.read_csv("crawling/data/reivew_table.csv")
+reviews_df = pd.read_csv("/content/drive/MyDrive/자연어처리/hotel_assistant/crawling/data/reivew_table.csv")
+
 
 # SBERT 모델 로드
 sbert_model = SentenceTransformer("snunlp/KR-SBERT-V40K-klueNLI-augSTS")
