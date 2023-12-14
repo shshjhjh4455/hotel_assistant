@@ -126,4 +126,4 @@ precision, recall, f1, _ = precision_recall_fscore_support(
 print(f"Accuracy: {accuracy}, Precision: {precision}, Recall: {recall}, F1: {f1}")
 
 # 모델 저장
-torch.save(model.state_dict(), "kobert_finetuned.bin")
+torch.save(model.state_dict(), "data/kobert_finetuned.bin")
