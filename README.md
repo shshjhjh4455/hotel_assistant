@@ -52,6 +52,8 @@ python app.py
 ```
 
 도커 sql 사용방법
+
+```
 docker pull mcr.microsoft.com/azure-sql-edge
 docker run -d --name sql_server_demo -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=yourStrong(!)Password' -p 1433:1433 mcr.microsoft.com/azure-sql-edge
 
@@ -62,7 +64,40 @@ HOMEBREW_ACCEPT_EULA=Y brew install msodbcsql18 mssql-tools18
 
 ```
 
+❯ tree
+.
+├── README.md
+├── chatbot
+│ ├── **pycache**
+│ │ ├── app.cpython-310.pyc
+│ │ ├── classifier.cpython-310.pyc
+│ │ ├── gpt_api.cpython-310.pyc
+│ │ ├── hotel_question_classifier_gpt_api.cpython-310.pyc
+│ │ ├── hotel_recommender.cpython-310.pyc
+│ │ └── tokenization_morp.cpython-310.pyc
+│ ├── app.py
+│ ├── data
+│ │ └── kobert_finetuned.bin
+│ ├── gpt_api.py
+│ ├── hotel_question_classifier_gpt_api.py
+│ ├── hotel_recommender.py
+│ ├── sentiment_analyst_review.py
+│ └── templates
+│ └── index.html
+├── crawling
+│ ├── crawling_hotel_Id.py
+│ ├── crawling_hotel_review.py
+│ ├── crawling_hotel_table.py
+│ ├── create_hotel_database.sql
+│ └── data
+│ ├── hotel_table.csv
+│ ├── reivew_table.csv
+│ └── test_hotel_table.csv
+└── requirements.txt
 
+7 directories, 22 files
+
+    ```
 
 ## 사용 방법
 
@@ -75,5 +110,7 @@ HOMEBREW_ACCEPT_EULA=Y brew install msodbcsql18 mssql-tools18
 ## 라이선스
 
 이 프로젝트는 [MIT 라이선스](LICENSE) 하에 제공됩니다.
+
+```
 
 ```
