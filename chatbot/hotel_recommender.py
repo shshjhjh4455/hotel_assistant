@@ -1,10 +1,11 @@
-from transformers import BertForSequenceClassification, BertConfig
+from transformers import BertForSequenceClassification, BertTokenizer
 from sentence_transformers import SentenceTransformer
 import torch
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 from tqdm import tqdm
+from kobert_tokenizer import KoBERTTokenizer
 
 # 감성 분석 모델 로드
 model_path = "chatbot/data/kobert_finetuned.bin"
@@ -22,28 +23,55 @@ reviews_df = pd.read_csv("crawling/data/reivew_table.csv")
 sbert_model = SentenceTransformer("snunlp/KR-SBERT-V40K-klueNLI-augSTS")
 
 
-# 호텔 추천 함수 정의
+# KoBERT 토크나이저 로드
+tokenizer = KoBERTTokenizer.from_pretrained("skt/kobert-base-v1")
+
+
+def get_sentiment_score(review, sentiment_model, tokenizer):
+    inputs = tokenizer.encode_plus(
+        review,
+        add_special_tokens=True,
+        return_tensors="pt",
+        max_length=512,
+        truncation=True,
+        padding="max_length",
+    )
+    outputs = sentiment_model(**inputs)
+    # 긍정 클래스의 점수를 추출
+    sentiment_score = torch.sigmoid(outputs.logits)[0][1].item()
+    return sentiment_score
+
+
 def recommend_hotel(question, reviews_df, sentiment_model, sbert_model):
     # 사용자 질문 임베딩
     question_embedding = sbert_model.encode(question)
 
     # 호텔별 리뷰 임베딩 및 감성 점수 계산
-    hotel_embeddings = {}
+    hotel_scores = {}
     for hotel_id in tqdm(
-        reviews_df["HOTEL_ID"].unique(), desc="Calculating embeddings for each hotel"
+        reviews_df["HOTEL_ID"].unique(),
+        desc="Calculating embeddings and sentiment scores for each hotel",
     ):
         hotel_reviews = reviews_df[reviews_df["HOTEL_ID"] == hotel_id]["COMMENT"]
-        embeddings = [sbert_model.encode(review) for review in hotel_reviews]
-        hotel_embeddings[hotel_id] = {"embedding": np.mean(embeddings, axis=0)}
+        embeddings = []
+        sentiment_scores = []
+        for review in hotel_reviews:
+            embedding = sbert_model.encode(review)
+            sentiment_score = get_sentiment_score(review, sentiment_model, tokenizer)
+            embeddings.append(embedding)
+            sentiment_scores.append(sentiment_score)
 
-    # 사용자 질문과 리뷰 임베딩 간 유사도 계산
-    similarities = {}
-    for hotel_id, data in hotel_embeddings.items():
-        sim = cosine_similarity([question_embedding], [data["embedding"]]).flatten()[0]
-        similarities[hotel_id] = sim
+        avg_embedding = np.mean(embeddings, axis=0)
+        avg_sentiment_score = np.mean(sentiment_scores)
+
+        # 유사도 계산
+        sim = cosine_similarity([question_embedding], [avg_embedding]).flatten()[0]
+
+        # 유사도와 감성 점수 결합
+        hotel_scores[hotel_id] = sim * avg_sentiment_score
 
     # 최종 호텔 추천
-    recommended_hotel_id = max(similarities, key=similarities.get)
+    recommended_hotel_id = max(hotel_scores, key=hotel_scores.get)
     return recommended_hotel_id
 
 
