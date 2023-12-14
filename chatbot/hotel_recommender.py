@@ -63,7 +63,7 @@ def recommend_hotel(question):
         embeddings = [sbert_model.encode(review) for review in hotel_reviews]
         sentiment_scores = [get_sentiment_score(review) for review in hotel_reviews]
 
-        avg_embedding = np.mean(embeddings, axis=0) 
+        # avg_embedding = np.mean(embeddings, axis=0) 
         avg_sentiment_score = np.mean(sentiment_scores) 
         sim = cosine_similarity([question_embedding], embeddings).flatten()[0] 
 

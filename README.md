@@ -41,11 +41,28 @@ pip install -r requirements.txt
 
 프로젝트를 실행하기 위해 다음 명령어를 사용합니다:
 
+flask run
+
 ```
 
 python app.py
 
 ```
+
+```
+
+도커 sql 사용방법
+docker pull mcr.microsoft.com/azure-sql-edge
+docker run -d --name sql_server_demo -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=yourStrong(!)Password' -p 1433:1433 mcr.microsoft.com/azure-sql-edge
+
+brew tap microsoft/mssql-release https://github.com/Microsoft/homebrew-mssql-release
+brew update
+brew upgrade
+HOMEBREW_ACCEPT_EULA=Y brew install msodbcsql18 mssql-tools18
+
+```
+
+
 
 ## 사용 방법
 
