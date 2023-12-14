@@ -1,3 +1,4 @@
 .env
 chatbot/1_bert_download_001_bert_morp_pytorch/001_bert_morp_pytorch/pytorch_model.bin
+chatbot/data/kobert_finetuned.bin
 chatbot/data/pytorch_model.bin
