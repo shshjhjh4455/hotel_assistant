@@ -1,34 +1,55 @@
-def recommend_hotel(question):
-    """
-    사용자의 질문에 기반하여 호텔을 추천합니다.
+from sentence_transformers import SentenceTransformer
+import pyodbc
+import pandas as pd
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
 
-    Parameters:
-    question (str): 사용자의 질문
+# 데이터베이스 연결 설정
+server = "127.0.0.1"
+username = "sa"
+password = "Hotelchat44"
 
-    Returns:
-    str: 추천 호텔에 대한 정보
-    """
-    # 실제 구현에서는 여기에 데이터베이스 쿼리나 추천 알고리즘을 사용할 수 있습니다.
-    # 임시 로직: 사용자의 질문에 따라 다른 호텔 추천
-    if "서울" in question:
-        return "추천 호텔: 서울 파크 호텔"
-    elif "부산" in question:
-        return "추천 호텔: 부산 마린 호텔"
-    elif "제주" in question:
-        return "추천 호텔: 제주 아일랜드 호텔"
-    else:
-        return "특정 지역에 대한 추천 호텔을 찾을 수 없습니다. 지역을 명시해주세요."
+cnxn = pyodbc.connect(
+    "DRIVER={ODBC Driver 17 for SQL Server};SERVER="
+    + server
+    + ";UID="
+    + username
+    + ";PWD="
+    + password
+)
 
+# SBERT 모델 로드
+model = SentenceTransformer("snunlp/KR-SBERT-V40K-klueNLI-augSTS")
 
-if __name__ == "__main__":
-    # 테스트 코드
-    test_questions = [
-        "서울에 좋은 호텔 추천해줄래?",
-        "부산 근처에 가족과 함께 갈만한 숙소 있을까?",
-        "제주도 여행 갈 때 좋은 호텔 추천해줘",
-        "강릉에 있는 호텔 알려줘",
-    ]
+# 데이터 로드
+hotels_df = pd.read_sql("SELECT * FROM HOTEL", cnxn)
+reviews_df = pd.read_sql("SELECT * FROM REVIEW", cnxn)
 
-    for question in test_questions:
-        recommendation = recommend_hotel(question)
-        print(f"질문: {question}\n -> {recommendation}\n")
+# 리뷰 임베딩 생성
+review_embeddings = model.encode(
+    reviews_df["COMMENT"].to_list(), show_progress_bar=True
+)
+
+# 호텔 별 평균 리뷰 임베딩 계산
+hotel_avg_embeddings = {}
+for hotel_id in hotels_df["HOTEL_ID"]:
+    hotel_reviews = review_embeddings[reviews_df["HOTEL_ID"] == hotel_id]
+    hotel_avg_embeddings[hotel_id] = np.mean(hotel_reviews, axis=0)
+
+# 사용자의 질문 임베딩
+question_embedding = model.encode("깨끗한 호텔에 가고 싶어")
+
+# 유사도 계산 및 호텔 추천
+hotel_ids = list(hotel_avg_embeddings.keys())
+hotel_embeddings = list(hotel_avg_embeddings.values())
+similarities = cosine_similarity([question_embedding], hotel_embeddings).flatten()
+recommended_hotel_id = hotel_ids[np.argmax(similarities)]
+
+# 추천된 호텔 정보
+recommended_hotel = hotels_df[hotels_df["HOTEL_ID"] == recommended_hotel_id]
+
+# 데이터베이스 연결 종료
+cnxn.close()
+
+# 결과 출력
+print(f"추천 호텔: {recommended_hotel}")
