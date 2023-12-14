@@ -45,12 +45,6 @@ flask run
 
 ```
 
-python app.py
-
-```
-
-```
-
 도커 sql 사용방법
 
 ```
@@ -61,6 +55,8 @@ brew tap microsoft/mssql-release https://github.com/Microsoft/homebrew-mssql-rel
 brew update
 brew upgrade
 HOMEBREW_ACCEPT_EULA=Y brew install msodbcsql18 mssql-tools18
+
+```
 
 ```
 
@@ -97,7 +93,7 @@ HOMEBREW_ACCEPT_EULA=Y brew install msodbcsql18 mssql-tools18
 
 7 directories, 22 files
 
-    ```
+```
 
 ## 사용 방법
 
@@ -110,7 +106,3 @@ HOMEBREW_ACCEPT_EULA=Y brew install msodbcsql18 mssql-tools18
 ## 라이선스
 
 이 프로젝트는 [MIT 라이선스](LICENSE) 하에 제공됩니다.
-
-```
-
-```
