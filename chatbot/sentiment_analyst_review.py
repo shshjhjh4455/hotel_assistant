@@ -29,6 +29,9 @@ reviews_df["Sentiment"] = reviews_df.apply(label_sentiment, axis=1)
 # sentiment_analysis_dataset으로 사용할 데이터셋
 sentiment_analysis_dataset = reviews_df[["COMMENT", "Sentiment"]]
 
+# NaN 값이 있는 행을 제거
+sentiment_analysis_dataset = sentiment_analysis_dataset.dropna()
+
 # 토크나이저 로드
 tokenizer = KoBERTTokenizer.from_pretrained("skt/kobert-base-v1")
 
