@@ -28,7 +28,8 @@ def is_hotel_related(question):
     return int(response.choices[0].text.strip())
 
 
-# 함수 호출 예시
-question = "배가 고파"
-result = is_hotel_related(question)
-print(f"호텔 관련 질문: {result}")  # 1 또는 0 출력
+# main 함수
+if __name__ == "__main__":
+    question = "호텔 추천해줘"
+    result = is_hotel_related(question)
+    print(f"호텔 관련 질문: {result}")  # 1 출력
