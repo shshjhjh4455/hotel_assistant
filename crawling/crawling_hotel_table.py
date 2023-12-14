@@ -1,4 +1,3 @@
-import concurrent.futures
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
@@ -9,6 +8,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
+# 오류 있음 -> 해결 필요
 
 
 def process_hotel_page(hotel_id, server, username, password):
@@ -80,14 +81,14 @@ def extract_room_info(driver, hotel_id):
             type_selector = f"#__next > div > div > main > article > div.css-c45a2y > div > section > div:nth-child(1) > div > div.css-1z06rwl > div:nth-child({index}) > div > section.css-1tykgzp > div.css-dhr6qk > div.css-deizzc"
             price_selector = f"#__next > div > div > main > article > div.css-c45a2y > div > section > div:nth-child(1) > div > div.css-1z06rwl > div:nth-child(1) > div > section.css-1qwzivr > div"
             link_selector = f"#__next > div > div > main > article > div.css-c45a2y > div > section > div:nth-child(1) > div > div.css-1z06rwl > div:nth-child({index}) > div > section.css-1qwzivr > div > a"
-                            #__next > div > div > main > article > div.css-c45a2y > div > section > div:nth-child(1) > div > div.css-1z06rwl > div:nth-child(1) > div > section.css-1tykgzp > div.css-ryy6up > section > div:nth-child(1) > div > div > div > div > span > img
-                            #__next > div > div > main > article > div.css-c45a2y > div > section > div:nth-child(1) > div > div.css-1z06rwl > div:nth-child(1) > div > section.css-1tykgzp > div.css-ryy6up > section > div:nth-child(1) > div
-                            #__next > div > div > main > article > div.css-c45a2y > div > section > div:nth-child(1) > div > div.css-1z06rwl > div:nth-child(1) > div > section.css-1tykgzp > div.css-ryy6up
-                            #__next > div > div > main > article > div.css-c45a2y > div > section > div:nth-child(1) > div > div.css-1z06rwl > div:nth-child(1) > div > section.css-1tykgzp > div.css-ryy6up
-                            #__next > div > div > main > article > div.css-c45a2y > div > section > div:nth-child(1) > div > div.css-1z06rwl > div:nth-child(1) > div > section.css-1tykgzp > div.css-ryy6up > section > div:nth-child(1) > div > div > div > div > span > img
-                            #__next > div > div > main > article > div.css-c45a2y > div > section > div:nth-child(1) > div > div.css-1z06rwl > div:nth-child(2) > div > section.css-1tykgzp > div.css-ryy6up > section > div:nth-child(1) > div > div > div.swiper-slide.swiper-slide-visible > div > span > img
-                            #__next > div > div > main > article > div.css-c45a2y > div > section > div:nth-child(1) > div > div.css-1z06rwl > div:nth-child(3) > div > section.css-1tykgzp > div.css-ryy6up > section > div:nth-child(1) > div > div > div.swiper-slide.swiper-slide-visible.swiper-slide-active > div > span > img
-                            #__next > div > div > main > article > div.css-c45a2y > div > section > div:nth-child(1) > div > div.css-1z06rwl > div:nth-child(3) > div > section.css-1tykgzp > div.css-ryy6up > section > div:nth-child(1) > div > div > div.swiper-slide.swiper-slide-visible.swiper-slide-active > div > span > img
+            # __next > div > div > main > article > div.css-c45a2y > div > section > div:nth-child(1) > div > div.css-1z06rwl > div:nth-child(1) > div > section.css-1tykgzp > div.css-ryy6up > section > div:nth-child(1) > div > div > div > div > span > img
+            # __next > div > div > main > article > div.css-c45a2y > div > section > div:nth-child(1) > div > div.css-1z06rwl > div:nth-child(1) > div > section.css-1tykgzp > div.css-ryy6up > section > div:nth-child(1) > div
+            # __next > div > div > main > article > div.css-c45a2y > div > section > div:nth-child(1) > div > div.css-1z06rwl > div:nth-child(1) > div > section.css-1tykgzp > div.css-ryy6up
+            # __next > div > div > main > article > div.css-c45a2y > div > section > div:nth-child(1) > div > div.css-1z06rwl > div:nth-child(1) > div > section.css-1tykgzp > div.css-ryy6up
+            # __next > div > div > main > article > div.css-c45a2y > div > section > div:nth-child(1) > div > div.css-1z06rwl > div:nth-child(1) > div > section.css-1tykgzp > div.css-ryy6up > section > div:nth-child(1) > div > div > div > div > span > img
+            # __next > div > div > main > article > div.css-c45a2y > div > section > div:nth-child(1) > div > div.css-1z06rwl > div:nth-child(2) > div > section.css-1tykgzp > div.css-ryy6up > section > div:nth-child(1) > div > div > div.swiper-slide.swiper-slide-visible > div > span > img
+            # __next > div > div > main > article > div.css-c45a2y > div > section > div:nth-child(1) > div > div.css-1z06rwl > div:nth-child(3) > div > section.css-1tykgzp > div.css-ryy6up > section > div:nth-child(1) > div > div > div.swiper-slide.swiper-slide-visible.swiper-slide-active > div > span > img
+            # __next > div > div > main > article > div.css-c45a2y > div > section > div:nth-child(1) > div > div.css-1z06rwl > div:nth-child(3) > div > section.css-1tykgzp > div.css-ryy6up > section > div:nth-child(1) > div > div > div.swiper-slide.swiper-slide-visible.swiper-slide-active > div > span > img
 
             # 명시적 대기를 사용하여 요소가 로드될 때까지 기다림
             WebDriverWait(driver, 20).until(

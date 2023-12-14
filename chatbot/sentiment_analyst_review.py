@@ -9,13 +9,11 @@ from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 import pyodbc
 from tqdm import tqdm
 
+# 해당 코드는 코랩에서 실행되는 코드이며, reviews_df path변경이 필요합니다.
+# 코랩에서 A100 GPU로 실행시 각 에포크 마다 14분이 소요되며, 총 3번의 에포크를 진행합니다.
+
 # CSV 파일에서 데이터 로드
 reviews_df = pd.read_csv("crawling/data/reivew_table.csv")
-
-
-# 점수 기준으로 레이블 결정
-def label_sentiment(row):
-    return 1 if row["RATING"] >= 4 else 0
 
 
 # 점수 기준으로 레이블 결정
@@ -124,6 +122,7 @@ precision, recall, f1, _ = precision_recall_fscore_support(
     true_labels, predictions, average="binary"
 )
 print(f"Accuracy: {accuracy}, Precision: {precision}, Recall: {recall}, F1: {f1}")
+# Accuracy: 0.9294323580895224, Precision: 0.9454888230541342, Recall: 0.977774064171123, F1: 0.9613604622504587
 
 # 모델 저장
 torch.save(model.state_dict(), "data/kobert_finetuned.bin")
