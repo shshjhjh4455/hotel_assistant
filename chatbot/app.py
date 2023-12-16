@@ -18,7 +18,8 @@ def chat():
     if is_hotel_related(question):
         answer = recommend_hotel(question)
     else:
-        answer = get_gpt_response(question)
+        # 호텔 관련 질문이 아닌 경우, 사용자에게 호텔 관련 질문을 유도하는 메시지 반환
+        answer = "호텔에 대해 물어보세요. 예를 들어, '서울에서 좋은 호텔 추천해줘'와 같이 말이죠."
     return jsonify({"response": answer})
 
 

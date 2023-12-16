@@ -1,7 +1,6 @@
 from transformers import BertForSequenceClassification, AdamW
 from kobert_tokenizer import KoBERTTokenizer
 import pandas as pd
-import sqlalchemy
 import torch
 from torch.utils.data import DataLoader, Dataset
 from sklearn.model_selection import train_test_split
