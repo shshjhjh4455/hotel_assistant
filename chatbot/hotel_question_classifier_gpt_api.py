@@ -2,7 +2,7 @@ import openai
 import os
 
 # API 키 직접 설정
-openai.api_key = "yor_api_key"
+openai.api_key = "your_api_key"
 
 
 def is_hotel_related(question):

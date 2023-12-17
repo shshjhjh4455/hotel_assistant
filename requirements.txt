@@ -1,4 +1,6 @@
 sentencepiece
+sentence-transformers
+kobert-transformers
 git+https://git@github.com/SKTBrain/KoBERT.git@master
 git+https://github.com/SKTBrain/KoBERT.git#egg=kobert_tokenizer&subdirectory=kobert_hf
 transformers
@@ -10,3 +12,4 @@ torchvision
 sentencePiece
 flask
 openai==0.28
+python-dotenv
