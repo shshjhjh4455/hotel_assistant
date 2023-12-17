@@ -1,6 +1,5 @@
 from flask import Flask, request, jsonify, render_template
 from hotel_recommender import recommend_hotel
-from gpt_api import get_gpt_response
 from hotel_question_classifier_gpt_api import is_hotel_related
 
 app = Flask(__name__)

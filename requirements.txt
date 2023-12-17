@@ -1,12 +1,12 @@
-pip install sentencepiece
-pip install git+https://git@github.com/SKTBrain/KoBERT.git@master
-pip install 'git+https://github.com/SKTBrain/KoBERT.git#egg=kobert_tokenizer&subdirectory=kobert_hf'
-pip install transformers
-pip install pyodbc
-pip install tqdm
-pip install sqlalchemy
-pip install torch
-pip install torchvision
-pip install sentencePiece
-pip install flask
-pip install openai==0.28
+sentencepiece
+git+https://git@github.com/SKTBrain/KoBERT.git@master
+git+https://github.com/SKTBrain/KoBERT.git#egg=kobert_tokenizer&subdirectory=kobert_hf
+transformers
+pyodbc
+tqdm
+sqlalchemy
+torch
+torchvision
+sentencePiece
+flask
+openai==0.28
